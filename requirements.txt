@@ -6,3 +6,5 @@ numpy
 catboost
 scipy
 psycopg2-binary
+ultralytics
+
