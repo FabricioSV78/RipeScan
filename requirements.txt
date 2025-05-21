@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pillow
+opencv-python
+numpy
+catboost
+scipy
+psycopg2-binary
