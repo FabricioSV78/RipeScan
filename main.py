@@ -22,6 +22,7 @@ modelo = CatBoostClassifier()
 modelo.load_model("modelo_catboost_mejorado.cbm")
 detector = YOLO("yolov9c.pt")
 
+
 # Configuración de PostgreSQL
 def guardar_metricas_postgres(timestamp, tiempo, precision, costo, total):
     conn = psycopg2.connect(
