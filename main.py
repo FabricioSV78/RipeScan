@@ -25,11 +25,11 @@ detector = YOLO("yolov9c.pt")
 # Configuración de PostgreSQL
 def guardar_metricas_postgres(timestamp, tiempo, precision, costo, total):
     conn = psycopg2.connect(
-        dbname="banana_db",
-        user="postgres",
-        password="admin",
-        host="localhost",
-        port="5432"
+        dbname=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASS"),
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT")
     )
     cursor = conn.cursor()
 
