@@ -15,13 +15,19 @@ from psycopg2 import sql
 import threading
 import os
 
+import torch
+from ultralytics.nn.tasks import DetectionModel
+
+# Habilita explícitamente la clase confiable que el modelo necesita
+torch.serialization.add_safe_globals([DetectionModel])
+
 
 app = FastAPI()
 
 # Cargar modelos
 modelo = CatBoostClassifier()
 modelo.load_model("modelo_catboost_mejorado.cbm")
-detector = YOLO("yolov8m.pt", weights_only=False)
+detector = YOLO("yolov8m.pt")
 
 
 # Configuración de PostgreSQL
