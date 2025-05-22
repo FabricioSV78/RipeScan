@@ -123,7 +123,7 @@ async def predecir_madurez(file: UploadFile = File(...)):
                 features = extraer_caracteristicas_mejoradas(crop)
                 pred_raw = modelo.predict([features])
                 pred = str(pred_raw[0][0]) if isinstance(pred_raw[0], (list, np.ndarray)) else str(pred_raw[0])
-                fuente = ImageFont.truetype("arial.ttf", size=12)
+                fuente = ImageFont.load_default()
 
                 draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
                 draw.text((x1 + 5, y1 - 14), etiquetas_es.get(pred, pred), fill="red", font=fuente)
