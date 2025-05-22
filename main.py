@@ -15,12 +15,13 @@ from psycopg2 import sql
 import threading
 import os
 
+
 app = FastAPI()
 
 # Cargar modelos
 modelo = CatBoostClassifier()
 modelo.load_model("modelo_catboost_mejorado.cbm")
-detector = YOLO("yolov8m.pt")
+detector = YOLO("yolov8m.pt", weights_only=False)
 
 
 # Configuración de PostgreSQL
