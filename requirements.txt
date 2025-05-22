@@ -1,4 +1,5 @@
 fastapi
+torch==2.5.0
 uvicorn
 pillow
 opencv-python

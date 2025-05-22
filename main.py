@@ -15,27 +15,6 @@ from psycopg2 import sql
 import threading
 import os
 
-import torch
-from torch.nn.modules.container import Sequential
-from torch.nn.modules.conv import Conv2d
-from ultralytics.nn.tasks import DetectionModel
-from ultralytics.nn.modules import (
-    Conv, Bottleneck, C2f, SPPF, Concat, Detect, ConvTranspose
-)
-
-torch.serialization.add_safe_globals([
-    DetectionModel,
-    Sequential,
-    Conv2d,
-    Conv,
-    Bottleneck,
-    C2f,
-    SPPF,
-    Concat,
-    Detect,
-    ConvTranspose
-])
-
 app = FastAPI()
 
 # Cargar modelos
