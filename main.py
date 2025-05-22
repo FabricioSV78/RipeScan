@@ -16,13 +16,28 @@ import threading
 import os
 
 import torch
-from ultralytics.nn.tasks import DetectionModel
 from torch.nn.modules.container import Sequential
+from ultralytics.nn.tasks import DetectionModel
+from ultralytics.nn.modules import (
+    Conv, 
+    Bottleneck, 
+    C2f, 
+    SPPF, 
+    Concat, 
+    Detect, 
+    ConvTranspose
+)
 
-# Autorizar clases necesarias para el deserializado
 torch.serialization.add_safe_globals([
     DetectionModel,
-    Sequential  # añadido para resolver tu nuevo error
+    Sequential,
+    Conv,
+    Bottleneck,
+    C2f,
+    SPPF,
+    Concat,
+    Detect,
+    ConvTranspose
 ])
 
 
