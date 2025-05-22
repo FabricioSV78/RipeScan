@@ -11,9 +11,9 @@ import time
 from datetime import datetime
 from scipy.stats import skew, kurtosis
 import psycopg2
-from psycopg2 import sql
 import urllib.parse as up
 import os
+
 
 app = FastAPI()
 recomendaciones_por_madurez = {

@@ -1,5 +1,5 @@
 fastapi
-torch==2.5.0
+torch==2.1.2
 uvicorn
 pillow
 opencv-python
@@ -8,4 +8,4 @@ catboost
 scipy
 psycopg2-binary
 python-multipart
-ultralytics==8.0.20
+ultralytics==8.0.176
