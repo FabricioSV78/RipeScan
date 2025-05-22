@@ -17,9 +17,13 @@ import os
 
 import torch
 from ultralytics.nn.tasks import DetectionModel
+from torch.nn.modules.container import Sequential
 
-# Habilita explícitamente la clase confiable que el modelo necesita
-torch.serialization.add_safe_globals([DetectionModel])
+# Autorizar clases necesarias para el deserializado
+torch.serialization.add_safe_globals([
+    DetectionModel,
+    Sequential  # añadido para resolver tu nuevo error
+])
 
 
 app = FastAPI()
