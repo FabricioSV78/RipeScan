@@ -2,7 +2,7 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse, FileResponse
 from catboost import CatBoostClassifier
 from ultralytics import YOLO
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import cv2
 import io
@@ -12,19 +12,31 @@ from datetime import datetime
 from scipy.stats import skew, kurtosis
 import psycopg2
 from psycopg2 import sql
-import threading
-import os
 import urllib.parse as up
+import os
 
 app = FastAPI()
+recomendaciones_por_madurez = {
+    "unripe": "Estos platanos estan verdes. Ideal para freír o dejar madurar unos días.",
+    "ripe": "Estos platanos estan maduros. Perfecto para comer al instante o hacer batidos.",
+    "overripe": "Estos platanos estan sobremaduros. Úsalo para hacer pan de plátano, postres o compotas."
+}
+
+etiquetas_es = {
+    "unripe": "Inmaduro",
+    "ripe": "Maduro",
+    "overripe": "Sobremaduro"
+}
+
 
 # Cargar modelos
 modelo = CatBoostClassifier()
 modelo.load_model("modelo_catboost_mejorado.cbm")
-detector = YOLO("yolov8m.pt")
-
+detector = YOLO("yolov9c.pt")
 
 # Configuración de PostgreSQL
+
+
 def guardar_metricas_postgres(timestamp, tiempo, precision, costo, total):
     db_url = os.getenv("DATABASE_URL")
     if not db_url:
@@ -53,6 +65,7 @@ def guardar_metricas_postgres(timestamp, tiempo, precision, costo, total):
     cursor.close()
     conn.close()
 
+
 # Costo de clasificación
 COSTO_POR_SEGUNDO = 0.05
 
@@ -80,6 +93,12 @@ def extraer_caracteristicas_mejoradas(arr):
 # Endpoint de predicción
 @app.post("/predict/")
 async def predecir_madurez(file: UploadFile = File(...)):
+    agrupados_por_madurez = {
+    "unripe": [],
+    "ripe": [],
+    "overripe": []
+    }
+
     start_time = time.time()
 
     image_bytes = await file.read()
@@ -91,8 +110,6 @@ async def predecir_madurez(file: UploadFile = File(...)):
 
     results = detector(temp_path, imgsz=960, verbose=False)
     draw = ImageDraw.Draw(image)
-
-    resultados = []
     total_platanos = 0
 
     for result in results:
@@ -104,18 +121,33 @@ async def predecir_madurez(file: UploadFile = File(...)):
                 crop = image_np[y1:y2, x1:x2]
                 crop = cv2.resize(crop, (100, 100))
                 features = extraer_caracteristicas_mejoradas(crop)
-                pred = str(modelo.predict([features])[0])
+                pred_raw = modelo.predict([features])
+                pred = str(pred_raw[0][0]) if isinstance(pred_raw[0], (list, np.ndarray)) else str(pred_raw[0])
+                fuente = ImageFont.truetype("arial.ttf", size=12)
 
                 draw.rectangle([x1, y1, x2, y2], outline="red", width=3)
-                draw.text((x1 + 5, y1 - 15), pred, fill="red")
+                draw.text((x1 + 5, y1 - 14), etiquetas_es.get(pred, pred), fill="red", font=fuente)
 
-                resultados.append({
+                agrupados_por_madurez[pred].append({
                     "posicion": [x1, y1, x2, y2],
                     "madurez": pred
                 })
 
-    if not resultados:
-        return JSONResponse(content={"mensaje": "No se detectó plátano en la imagen."})
+    respuesta = []
+    for madurez, platanos in agrupados_por_madurez.items():
+        if platanos:
+            respuesta.append({
+                "madurez": etiquetas_es.get(madurez, madurez),
+                "cantidad": len(platanos),
+                "recomendacion": recomendaciones_por_madurez[madurez],
+                "platanos": [
+                    {
+                        "posicion": platano["posicion"],
+                        "madurez": etiquetas_es.get(platano["madurez"], platano["madurez"])
+                    }
+                    for platano in platanos
+                ]
+            })
 
     # Guardar imagen anotada
     nombre_imagen = f"resultado_{uuid.uuid4().hex[:6]}.jpg"
@@ -135,36 +167,17 @@ async def predecir_madurez(file: UploadFile = File(...)):
         total=total_platanos
     )
 
+    if not any(agrupados_por_madurez.values()):
+        return {
+            "imagen_url": f"/imagen/{nombre_imagen}",
+            "resultados": []  # Vacío
+        }
+
     return {
-        "resultados": resultados,
-        "imagen_url": f"/imagen/{nombre_imagen}"
+        "imagen_url": f"/imagen/{nombre_imagen}",
+        "resultados": respuesta
     }
 
 @app.get("/imagen/{nombre}")
 def obtener_imagen(nombre: str):
     return FileResponse(nombre, media_type="image/jpeg")
-
-
-
-def limpiar_imagenes_antiguas(directorio=".", extensiones=(".jpg", ".png"), max_edad_min=3):
-    ahora = time.time()
-    for archivo in os.listdir(directorio):
-        if archivo.endswith(extensiones):
-            ruta = os.path.join(directorio, archivo)
-            edad_min = (ahora - os.path.getmtime(ruta)) / 60
-            if edad_min > max_edad_min:
-                try:
-                    os.remove(ruta)
-                except Exception:
-                    pass
-
-def lanzar_limpieza_periodica(intervalo_min=3):
-    def bucle():
-        while True:
-            limpiar_imagenes_antiguas()
-            time.sleep(intervalo_min * 60)
-    thread = threading.Thread(target=bucle, daemon=True)
-    thread.start()
-
-
-lanzar_limpieza_periodica()
