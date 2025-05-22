@@ -14,6 +14,7 @@ import psycopg2
 from psycopg2 import sql
 import threading
 import os
+import urllib.parse as up
 
 app = FastAPI()
 
@@ -25,20 +26,28 @@ detector = YOLO("yolov8m.pt")
 
 # Configuración de PostgreSQL
 def guardar_metricas_postgres(timestamp, tiempo, precision, costo, total):
-    conn = psycopg2.connect(
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASS"),
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT")
-    )
-    cursor = conn.cursor()
+    db_url = os.getenv("DATABASE_URL")
+    if not db_url:
+        raise Exception("No se encontró la variable de entorno DATABASE_URL")
 
-    insert_query = sql.SQL("""
-        INSERT INTO metricas_clasificacion (timestamp, tiempo_segundos, precision_promedio, costo_soles, total_platanos)
+    # Decodifica la URL si tiene caracteres especiales
+    up.uses_netloc.append("postgres")
+    url = up.urlparse(db_url)
+
+    conn = psycopg2.connect(
+        dbname=url.path[1:],
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
+
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO metricas_clasificacion 
+        (timestamp, tiempo_segundos, precision_promedio, costo_soles, total_platanos)
         VALUES (%s, %s, %s, %s, %s)
-    """)
-    cursor.execute(insert_query, (timestamp, tiempo, precision, costo, total))
+    """, (timestamp, tiempo, precision, costo, total))
 
     conn.commit()
     cursor.close()
