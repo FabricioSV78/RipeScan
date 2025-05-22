@@ -20,7 +20,7 @@ app = FastAPI()
 # Cargar modelos
 modelo = CatBoostClassifier()
 modelo.load_model("modelo_catboost_mejorado.cbm")
-detector = YOLO("yolov9c.pt")
+detector = YOLO("yolov8m.pt")
 
 
 # Configuración de PostgreSQL
