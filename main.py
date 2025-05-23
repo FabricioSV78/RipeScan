@@ -13,7 +13,7 @@ from scipy.stats import skew, kurtosis
 import psycopg2
 import urllib.parse as up
 import os
-
+import glob
 
 app = FastAPI()
 recomendaciones_por_madurez = {
@@ -181,3 +181,16 @@ async def predecir_madurez(file: UploadFile = File(...)):
 @app.get("/imagen/{nombre}")
 def obtener_imagen(nombre: str):
     return FileResponse(nombre, media_type="image/jpeg")
+
+def limpiar_imagenes_antiguas(directorio=".", extension="*.jpg", tiempo_maximo_segundos=120):
+    while True:
+        ahora = time.time()
+        for archivo in glob.glob(os.path.join(directorio, extension)):
+            try:
+                if os.path.isfile(archivo):
+                    tiempo_mod = os.path.getmtime(archivo)
+                    if ahora - tiempo_mod > tiempo_maximo_segundos:
+                        os.remove(archivo)
+            except Exception as e:
+                print(f"Error eliminando {archivo}: {e}")
+        time.sleep(70)  
