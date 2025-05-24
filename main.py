@@ -32,7 +32,7 @@ etiquetas_es = {
 # Cargar modelos
 modelo = CatBoostClassifier()
 modelo.load_model("modelo_catboost_mejorado.cbm")
-detector = YOLO("yolov8m.pt")
+detector = YOLO("yolov8s.pt")
 
 # Configuración de PostgreSQL
 
